@@ -52,12 +52,12 @@ export default function Sidebar() {
         })}
 
         <div className="sidebar-section-label" style={{ marginTop: '24px' }}>Sistema</div>
-        <Link href="/dashboard" className="sidebar-link">
+        <Link href="/products" className={`sidebar-link ${pathname === '/products' ? 'active' : ''}`}>
           <Package />
           Produtos
           <span className="sidebar-badge">12</span>
         </Link>
-        <Link href="/dashboard" className="sidebar-link">
+        <Link href="/settings" className={`sidebar-link ${pathname === '/settings' ? 'active' : ''}`}>
           <Settings />
           Configurações
         </Link>
