@@ -166,12 +166,13 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Zap size={18} style={{ color: 'var(--status-cooling-fg)' }} />
               <span className="card-title">Oportunidades de Venda</span>
-              <HelpCircle
-                size={14}
-                style={{ color: 'var(--text-muted)' }}
-                aria-label="Como o valor é estimado"
-                title="Estimativa = preço do produto sugerido × 3"
-              />
+              <span title="Estimativa = preço do produto sugerido × 3" style={{ display: 'flex' }}>
+                <HelpCircle
+                  size={14}
+                  style={{ color: 'var(--text-muted)' }}
+                  aria-label="Como o valor é estimado"
+                />
+              </span>
             </div>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
               {stats.opportunities.length} oportunidades

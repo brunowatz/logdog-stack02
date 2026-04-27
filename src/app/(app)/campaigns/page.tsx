@@ -7,6 +7,7 @@ import {
   Edit,
   Megaphone,
   Save,
+  X,
 } from 'lucide-react';
 import { getCampaigns, createCampaign, updateCampaign } from '@/lib/data-service';
 import { getCampaignTypeLabel, getCampaignTypeEmoji } from '@/lib/utils';
@@ -26,8 +27,6 @@ const campaignIcons: Record<CampaignType, string> = {
   replenishment: '🔄',
   launch: '🚀',
 };
-
-import { useEffect } from 'react';
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
