@@ -1,6 +1,7 @@
 'use client';
 
-import { Settings, User, Bell, Shield, Database, Globe, Save } from 'lucide-react';
+import { Settings, User, Bell, Shield, Database, Globe, Save, AlertCircle } from 'lucide-react';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 export default function SettingsPage() {
   return (
@@ -69,25 +70,43 @@ export default function SettingsPage() {
               </div>
             </div>
             
-            <div style={{ 
-              padding: '12px', 
-              background: 'rgba(34, 197, 94, 0.1)', 
-              borderRadius: '10px',
-              border: '1px solid rgba(34, 197, 94, 0.2)',
-              marginBottom: '16px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4ade80', fontSize: '13px', fontWeight: '600' }}>
-                <Shield size={14} /> Conectado ao Supabase
+            {isSupabaseConfigured ? (
+              <div style={{ 
+                padding: '12px', 
+                background: 'rgba(34, 197, 94, 0.1)', 
+                borderRadius: '10px',
+                border: '1px solid rgba(34, 197, 94, 0.2)',
+                marginBottom: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4ade80', fontSize: '13px', fontWeight: '600' }}>
+                  <Shield size={14} /> Conectado ao Supabase
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  Status: Sincronização em tempo real ativa
+                </div>
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                Status: Sincronização em tempo real ativa
+            ) : (
+              <div style={{ 
+                padding: '12px', 
+                background: 'rgba(245, 158, 11, 0.1)', 
+                borderRadius: '10px',
+                border: '1px solid rgba(245, 158, 11, 0.2)',
+                marginBottom: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fbbf24', fontSize: '13px', fontWeight: '600' }}>
+                  <AlertCircle size={14} /> Modo de Demonstração (Mock)
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  Aviso: O arquivo .env.local não foi detectado ou está incompleto.
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="form-group">
-              <label className="form-label">Região do Servidor</label>
+              <label className="form-label">Ambiente Atual</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-primary)' }}>
-                <Globe size={16} style={{ color: 'var(--text-muted)' }} /> South America (Sao Paulo)
+                <Globe size={16} style={{ color: 'var(--text-muted)' }} /> 
+                {isSupabaseConfigured ? 'Produção / Supabase' : 'Desenvolvimento / Local Mock'}
               </div>
             </div>
           </div>

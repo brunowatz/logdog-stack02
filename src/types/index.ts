@@ -65,11 +65,13 @@ export interface Campaign {
 export interface Message {
   id: string;
   client_id: string;
-  client_name: string;
   campaign_id: string | null;
   content: string;
   status: 'sent' | 'pending' | 'failed';
   sent_at: string;
+  // Vem da view messages_with_client (JOIN), não da tabela.
+  client_name?: string;
+  client_company?: string;
 }
 
 export interface Suggestion {

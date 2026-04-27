@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -21,6 +22,16 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+
+  const initial = (user?.email ?? 'V').charAt(0).toUpperCase();
+  const displayEmail = user?.email ?? 'Equipe Comercial';
+
+  async function handleSignOut() {
+    await signOut();
+    router.replace('/login');
+  }
 
   return (
     <aside className="sidebar">
@@ -83,17 +94,28 @@ export default function Sidebar() {
           fontWeight: '700',
           color: 'white',
         }}>
-          V
+          {initial}
         </div>
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>
             Vendedor
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            Equipe Comercial
+          <div style={{
+            fontSize: '11px',
+            color: 'var(--text-muted)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
+            {displayEmail}
           </div>
         </div>
-        <button className="btn-ghost btn-icon" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+        <button
+          onClick={handleSignOut}
+          title="Sair"
+          className="btn-ghost btn-icon"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+        >
           <LogOut size={18} />
         </button>
       </div>
