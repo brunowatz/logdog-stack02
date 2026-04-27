@@ -32,10 +32,13 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
 
-  /* Status */
+  /* Status (foreground tons clareados para contraste AA em fundo escuro) */
   --status-active: #22c55e;
+  --status-active-fg: #4ade80;
   --status-cooling: #eab308;
+  --status-cooling-fg: #fde047; /* mais claro que #facc15 → contraste AA */
   --status-inactive: #ef4444;
+  --status-inactive-fg: #f87171;
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
@@ -439,8 +442,8 @@ body {
 .status-badge.active .dot { background: #22c55e; }
 
 .status-badge.cooling {
-  background: rgba(234, 179, 8, 0.12);
-  color: #facc15;
+  background: rgba(234, 179, 8, 0.18);
+  color: var(--status-cooling-fg);
 }
 .status-badge.cooling .dot { background: #eab308; }
 
@@ -950,4 +953,128 @@ body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ============ SKELETON ============ */
+.skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shine 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shine {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ============ KBD ============ */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-bottom-width: 2px;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ============ COMMAND PALETTE HINT ============ */
+.cmdk-hint {
+  display: none; /* só desktop */
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  margin-bottom: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.cmdk-hint:hover {
+  border-color: var(--border-hover);
+  color: var(--text-secondary);
+}
+
+.cmdk-hint kbd {
+  margin-left: auto;
+}
+
+/* ============ MOBILE TOPBAR ============ */
+.mobile-topbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 49;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ============ TAB BADGE ============ */
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  margin-left: 6px;
+  border-radius: 9px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tab.active .tab-badge {
+  background: rgba(99,102,241,0.2);
+  color: var(--brand-primary-light);
+}
+
+/* ============ RESPONSIVE OVERRIDES ============ */
+@media (max-width: 768px) {
+  .mobile-topbar { display: flex; }
+  .cmdk-hint { display: none !important; }
+
+  .sidebar {
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+@media (min-width: 769px) {
+  .sidebar-backdrop { display: none; }
+  .cmdk-hint { display: inline-flex; }
 }

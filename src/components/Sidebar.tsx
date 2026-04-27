@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -10,20 +11,36 @@ import {
   Package,
   Settings,
   LogOut,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { getProducts } from '@/lib/data-service';
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/clients', label: 'Clientes', icon: Users },
-  { href: '/campaigns', label: 'Campanhas', icon: Megaphone },
-  { href: '/send', label: 'Enviar Mensagem', icon: Send },
+  { href: '/dashboard', label: 'Dashboard',        icon: LayoutDashboard },
+  { href: '/clients',   label: 'Clientes',         icon: Users },
+  { href: '/campaigns', label: 'Campanhas',        icon: Megaphone },
+  { href: '/send',      label: 'Enviar Mensagem',  icon: Send },
+  { href: '/messages',  label: 'Mensagens',        icon: MessageSquare },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const [productCount, setProductCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    getProducts().then(p => setProductCount(p.length));
+  }, []);
+
+  // Fecha o drawer mobile quando navega.
+  useEffect(() => { onMobileClose?.(); }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initial = (user?.email ?? 'V').charAt(0).toUpperCase();
   const displayEmail = user?.email ?? 'Equipe Comercial';
@@ -34,8 +51,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="sidebar">
-      {/* Logo */}
+    <aside className={`sidebar ${mobileOpen ? 'open' : ''}`}>
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">🐕</div>
         <div>
@@ -44,7 +60,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Navegação principal */}
       <nav className="sidebar-nav">
         <div className="sidebar-section-label">Menu</div>
         {navItems.map((item) => {
@@ -55,6 +70,7 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={`sidebar-link ${isActive ? 'active' : ''}`}
+              aria-current={isActive ? 'page' : undefined}
             >
               <Icon />
               {item.label}
@@ -63,18 +79,25 @@ export default function Sidebar() {
         })}
 
         <div className="sidebar-section-label" style={{ marginTop: '24px' }}>Sistema</div>
-        <Link href="/products" className={`sidebar-link ${pathname === '/products' ? 'active' : ''}`}>
+        <Link
+          href="/products"
+          className={`sidebar-link ${pathname === '/products' ? 'active' : ''}`}
+          aria-current={pathname === '/products' ? 'page' : undefined}
+        >
           <Package />
           Produtos
-          <span className="sidebar-badge">12</span>
+          {productCount !== null && <span className="sidebar-badge">{productCount}</span>}
         </Link>
-        <Link href="/settings" className={`sidebar-link ${pathname === '/settings' ? 'active' : ''}`}>
+        <Link
+          href="/settings"
+          className={`sidebar-link ${pathname === '/settings' ? 'active' : ''}`}
+          aria-current={pathname === '/settings' ? 'page' : undefined}
+        >
           <Settings />
           Configurações
         </Link>
       </nav>
 
-      {/* Footer */}
       <div style={{
         padding: '16px 20px',
         borderTop: '1px solid var(--border-subtle)',
@@ -100,18 +123,23 @@ export default function Sidebar() {
           <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>
             Vendedor
           </div>
-          <div style={{
-            fontSize: '11px',
-            color: 'var(--text-muted)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
+          <div
+            title={displayEmail}
+            style={{
+              fontSize: '11px',
+              color: 'var(--text-muted)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {displayEmail}
           </div>
         </div>
         <button
+          type="button"
           onClick={handleSignOut}
+          aria-label="Sair"
           title="Sair"
           className="btn-ghost btn-icon"
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}

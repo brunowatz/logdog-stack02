@@ -4,7 +4,7 @@
 // ============================================
 
 import { Client, Product, Order, Campaign, Message, DashboardStats, Suggestion } from '@/types';
-import { mockClients, mockProducts, mockOrders, mockCampaigns } from './mock-data';
+import { mockClients, mockProducts, mockOrders, mockCampaigns, mockMessages } from './mock-data';
 import { getClientStatus, daysSinceDate } from './utils';
 import { supabase, isSupabaseConfigured } from './supabase';
 
@@ -81,6 +81,84 @@ export async function getOrdersByClientId(clientId: string): Promise<Order[]> {
     return data || [];
   }
   return mockOrders.filter(o => o.client_id === clientId);
+}
+
+export async function createOrder(input: {
+  client_id: string;
+  items: Array<{ product_id: string; quantity: number }>;
+  notes?: string;
+}): Promise<Order> {
+  const products = await getProducts();
+  const lineItems = input.items
+    .map(i => {
+      const p = products.find(pp => pp.id === i.product_id);
+      if (!p) return null;
+      return {
+        product_id: p.id,
+        product_name: p.name,
+        quantity: i.quantity,
+        unit_price: p.price,
+        total: Number((p.price * i.quantity).toFixed(2)),
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+
+  const total = Number(lineItems.reduce((s, i) => s + i.total, 0).toFixed(2));
+
+  if (isSupabaseConfigured && supabase) {
+    const { data: order, error } = await supabase
+      .from('orders')
+      .insert({ client_id: input.client_id, total, status: 'completed', notes: input.notes ?? null })
+      .select()
+      .single();
+    if (error) throw error;
+
+    if (lineItems.length > 0) {
+      const { error: itemsErr } = await supabase
+        .from('order_items')
+        .insert(lineItems.map(li => ({ order_id: order.id, ...li })));
+      if (itemsErr) throw itemsErr;
+    }
+
+    // Atualiza last_purchase do cliente.
+    await supabase
+      .from('clients')
+      .update({ last_purchase: order.date })
+      .eq('id', input.client_id);
+
+    return { ...order, items: lineItems.map((li, idx) => ({ id: `tmp${idx}`, order_id: order.id, ...li })) };
+  }
+
+  const newOrder: Order = {
+    id: `o${Date.now()}`,
+    client_id: input.client_id,
+    date: new Date().toISOString().split('T')[0],
+    total,
+    status: 'completed',
+    items: lineItems.map((li, idx) => ({
+      id: `oi${Date.now()}_${idx}`,
+      order_id: `o${Date.now()}`,
+      ...li,
+    })),
+  };
+  mockOrders.unshift(newOrder);
+  return newOrder;
+}
+
+export async function getMessages(): Promise<Message[]> {
+  if (isSupabaseConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('messages_with_client')
+      .select('*')
+      .order('sent_at', { ascending: false })
+      .limit(200);
+    if (error) {
+      console.error('Erro ao buscar mensagens:', error);
+      return [];
+    }
+    return data || [];
+  }
+  return mockMessages;
 }
 
 async function getAllOrdersWithItems(): Promise<Order[]> {

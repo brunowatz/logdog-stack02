@@ -2,14 +2,17 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Filter, Eye, MessageSquare, ArrowUpDown } from 'lucide-react';
+import { Search, Eye, MessageSquare, ArrowUpDown } from 'lucide-react';
 import { getClients } from '@/lib/data-service';
 import { formatCurrency, formatDate, daysSinceDate } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
-import { ClientStatus } from '@/types';
+import ClientAvatar from '@/components/ClientAvatar';
+import LoadingPanel from '@/components/LoadingPanel';
+import EmptyState from '@/components/EmptyState';
+import { Client, ClientStatus } from '@/types';
 
 export default function ClientsPage() {
-  const [allClients, setAllClients] = useState<any[]>([]);
+  const [allClients, setAllClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -85,14 +88,7 @@ export default function ClientsPage() {
     inactive: allClients.filter(c => c.status === 'inactive').length,
   }), [allClients]);
 
-  if (loading) {
-    return (
-      <div className="animate-in" style={{ padding: '80px 40px', textAlign: 'center' }}>
-        <div className="loading-spinner" style={{ margin: '0 auto 16px' }}></div>
-        <p style={{ color: 'var(--text-secondary)' }}>Carregando lista de clientes...</p>
-      </div>
-    );
-  }
+  if (loading) return <LoadingPanel message="Carregando lista de clientes..." />;
 
   if (error) {
     return (
@@ -234,33 +230,18 @@ export default function ClientsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredClients.map((client: any) => (
+              {filteredClients.map((client) => (
                 <tr key={client.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div
-                        className="client-avatar"
-                        style={{
-                          background: client.status === 'inactive'
-                            ? 'rgba(239,68,68,0.15)'
-                            : client.status === 'cooling'
-                            ? 'rgba(234,179,8,0.15)'
-                            : 'rgba(34,197,94,0.15)',
-                          color: client.status === 'inactive'
-                            ? '#f87171'
-                            : client.status === 'cooling'
-                            ? '#facc15'
-                            : '#4ade80',
-                          width: '38px',
-                          height: '38px',
-                          fontSize: '14px',
-                        }}
-                      >
-                        {client.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: '600', fontSize: '14px' }}>{client.name}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{client.company}</div>
+                      <ClientAvatar name={client.name} status={client.status} size={38} fontSize={14} />
+                      <div style={{ minWidth: 0 }}>
+                        <div title={client.name} style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {client.name}
+                        </div>
+                        <div title={client.company} style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {client.company}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -302,11 +283,16 @@ export default function ClientsPage() {
         </div>
 
         {filteredClients.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-state-icon">🔍</div>
-            <h3>Nenhum cliente encontrado</h3>
-            <p>Tente ajustar os filtros de busca</p>
-          </div>
+          <EmptyState
+            icon="🔍"
+            title="Nenhum cliente encontrado"
+            description="Tente ajustar os filtros de busca."
+            action={
+              search || statusFilter !== 'all'
+                ? { label: 'Limpar filtros', onClick: () => { setSearch(''); setStatusFilter('all'); } }
+                : undefined
+            }
+          />
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -9,18 +9,21 @@ import {
   AlertTriangle,
   DollarSign,
   ShoppingCart,
-  MessageSquare,
   ArrowRight,
   Phone,
   Flame,
   Zap,
+  HelpCircle,
 } from 'lucide-react';
 import { getDashboardStats } from '@/lib/data-service';
 import { formatCurrency, daysSinceDate } from '@/lib/utils';
+import { DashboardStats } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
+import ClientAvatar from '@/components/ClientAvatar';
+import { SkeletonCard, SkeletonRow } from '@/components/Skeleton';
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,14 +46,27 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="animate-in" style={{ padding: '80px 40px', textAlign: 'center' }}>
-        <div className="loading-spinner" style={{ margin: '0 auto 16px' }}></div>
-        <p style={{ color: 'var(--text-secondary)' }}>Carregando dados do painel...</p>
+      <div className="animate-in">
+        <div className="page-header">
+          <h1>Dashboard</h1>
+          <p>Carregando seu painel...</p>
+        </div>
+        <div className="stat-grid">
+          {[0,1,2,3].map(i => <SkeletonCard key={i} height={130} />)}
+        </div>
+        <div className="grid-2">
+          <div className="card" style={{ padding: 0 }}>
+            {[0,1,2,3].map(i => <SkeletonRow key={i} />)}
+          </div>
+          <div className="card" style={{ padding: 0 }}>
+            {[0,1,2,3].map(i => <SkeletonRow key={i} />)}
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !stats) {
     return (
       <div className="animate-in" style={{ padding: '80px 40px', textAlign: 'center' }}>
         <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
@@ -65,50 +81,46 @@ export default function DashboardPage() {
 
   return (
     <div className="animate-in">
-      {/* Header */}
       <div className="page-header">
         <h1>Dashboard</h1>
         <p>Visão geral do seu time de vendas • {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
       </div>
 
-      {/* Stat Cards */}
       <div className="stat-grid">
         <div className="stat-card green animate-in stagger-1">
-          <div className="stat-card-icon" style={{ background: 'rgba(34,197,94,0.12)', color: '#4ade80' }}>
+          <div className="stat-card-icon" style={{ background: 'rgba(34,197,94,0.12)', color: 'var(--status-active-fg)' }}>
             <TrendingUp size={22} />
           </div>
-          <div className="stat-card-value" style={{ color: '#4ade80' }}>{stats.active_clients}</div>
+          <div className="stat-card-value" style={{ color: 'var(--status-active-fg)' }}>{stats.active_clients}</div>
           <div className="stat-card-label">Clientes Ativos</div>
         </div>
 
         <div className="stat-card yellow animate-in stagger-2">
-          <div className="stat-card-icon" style={{ background: 'rgba(234,179,8,0.12)', color: '#facc15' }}>
+          <div className="stat-card-icon" style={{ background: 'rgba(234,179,8,0.18)', color: 'var(--status-cooling-fg)' }}>
             <AlertTriangle size={22} />
           </div>
-          <div className="stat-card-value" style={{ color: '#facc15' }}>{stats.cooling_clients}</div>
+          <div className="stat-card-value" style={{ color: 'var(--status-cooling-fg)' }}>{stats.cooling_clients}</div>
           <div className="stat-card-label">Clientes Esfriando</div>
         </div>
 
         <div className="stat-card red animate-in stagger-3">
-          <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171' }}>
+          <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--status-inactive-fg)' }}>
             <TrendingDown size={22} />
           </div>
-          <div className="stat-card-value" style={{ color: '#f87171' }}>{stats.inactive_clients}</div>
+          <div className="stat-card-value" style={{ color: 'var(--status-inactive-fg)' }}>{stats.inactive_clients}</div>
           <div className="stat-card-label">Clientes Inativos</div>
         </div>
 
         <div className="stat-card purple animate-in stagger-4">
-          <div className="stat-card-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8' }}>
+          <div className="stat-card-icon" style={{ background: 'rgba(99,102,241,0.12)', color: 'var(--brand-primary-light)' }}>
             <DollarSign size={22} />
           </div>
-          <div className="stat-card-value" style={{ color: '#818cf8' }}>{formatCurrency(stats.total_revenue_month)}</div>
-          <div className="stat-card-label">Faturamento (30 dias)</div>
+          <div className="stat-card-value" style={{ color: 'var(--brand-primary-light)' }}>{formatCurrency(stats.total_revenue_month)}</div>
+          <div className="stat-card-label">Faturamento (este mês)</div>
         </div>
       </div>
 
-      {/* Two column layout */}
       <div className="grid-2" style={{ alignItems: 'start' }}>
-        {/* Clientes para abordar hoje */}
         <div className="card animate-in stagger-2">
           <div className="card-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -121,32 +133,16 @@ export default function DashboardPage() {
           </div>
 
           <div className="client-list">
-            {stats.contact_today.map((client: any, i: number) => (
+            {stats.contact_today.map((client, i) => (
               <Link
                 key={client.id}
                 href={`/clients/${client.id}`}
                 style={{ textDecoration: 'none' }}
               >
                 <div className="client-list-item" style={{ animationDelay: `${i * 0.05}s` }}>
-                  <div
-                    className="client-avatar"
-                    style={{
-                      background: client.status === 'inactive'
-                        ? 'rgba(239,68,68,0.15)'
-                        : client.status === 'cooling'
-                        ? 'rgba(234,179,8,0.15)'
-                        : 'rgba(34,197,94,0.15)',
-                      color: client.status === 'inactive'
-                        ? '#f87171'
-                        : client.status === 'cooling'
-                        ? '#facc15'
-                        : '#4ade80',
-                    }}
-                  >
-                    {client.name.charAt(0)}
-                  </div>
+                  <ClientAvatar name={client.name} status={client.status} />
                   <div className="client-info">
-                    <h4>{client.name}</h4>
+                    <h4 title={client.name}>{client.name}</h4>
                     <p>{client.company} • {client.city}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -155,29 +151,27 @@ export default function DashboardPage() {
                       {daysSinceDate(client.last_purchase)}d sem comprar
                     </div>
                   </div>
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href = `/clients/${client.id}`;
-                    }}
-                    style={{ flexShrink: 0 }}
-                  >
+                  <span className="btn btn-primary btn-sm" aria-hidden="true" style={{ flexShrink: 0 }}>
                     <Phone size={14} />
                     Contatar
-                  </button>
+                  </span>
                 </div>
               </Link>
             ))}
           </div>
         </div>
 
-        {/* Oportunidades de venda */}
         <div className="card animate-in stagger-3">
           <div className="card-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Zap size={18} style={{ color: '#eab308' }} />
+              <Zap size={18} style={{ color: 'var(--status-cooling-fg)' }} />
               <span className="card-title">Oportunidades de Venda</span>
+              <HelpCircle
+                size={14}
+                style={{ color: 'var(--text-muted)' }}
+                aria-label="Como o valor é estimado"
+                title="Estimativa = preço do produto sugerido × 3"
+              />
             </div>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
               {stats.opportunities.length} oportunidades
@@ -185,35 +179,35 @@ export default function DashboardPage() {
           </div>
 
           <div className="client-list">
-            {stats.opportunities.map((opp: any, i: number) => (
+            {stats.opportunities.map((opp) => (
               <Link
                 key={opp.client.id}
-                href={`/clients/${opp.client.id}`}
+                href={`/clients/${opp.client.id}?tab=suggestions`}
                 style={{ textDecoration: 'none' }}
               >
                 <div className="client-list-item">
                   <div
                     className="client-avatar"
                     style={{
-                      background: 'rgba(234,179,8,0.12)',
-                      color: '#facc15',
+                      background: 'rgba(234,179,8,0.18)',
+                      color: 'var(--status-cooling-fg)',
                       fontSize: '18px',
                     }}
+                    aria-hidden="true"
                   >
                     💰
                   </div>
                   <div className="client-info">
-                    <h4>{opp.client.name}</h4>
+                    <h4 title={opp.client.name}>{opp.client.name}</h4>
                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                       {opp.suggestion}
                     </p>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      color: '#4ade80',
-                    }}>
+                    <div
+                      style={{ fontSize: '14px', fontWeight: '700', color: 'var(--status-active-fg)' }}
+                      title="Estimativa = preço × 3"
+                    >
                       {formatCurrency(opp.estimated_value)}
                     </div>
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -227,9 +221,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick stats row */}
       <div style={{ marginTop: '24px' }}>
-        <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
           <div className="card animate-in stagger-1" style={{ textAlign: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '8px' }}>
               <Users size={20} style={{ color: 'var(--brand-primary-light)' }} />
@@ -247,17 +240,7 @@ export default function DashboardPage() {
                 {stats.total_orders_month}
               </span>
             </div>
-            <span className="stat-card-label">Pedidos (30 dias)</span>
-          </div>
-
-          <div className="card animate-in stagger-3" style={{ textAlign: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '8px' }}>
-              <MessageSquare size={20} style={{ color: '#22c55e' }} />
-              <span style={{ fontSize: '28px', fontWeight: '800', color: '#22c55e' }}>
-                {stats.contact_today.length}
-              </span>
-            </div>
-            <span className="stat-card-label">Contatos Pendentes</span>
+            <span className="stat-card-label">Pedidos (este mês)</span>
           </div>
         </div>
       </div>

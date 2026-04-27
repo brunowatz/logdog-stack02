@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
+import AppShell from '@/components/AppShell';
+import LoadingPanel from '@/components/LoadingPanel';
 import { useAuth } from '@/lib/auth-context';
 
 export default function AppLayout({
@@ -18,20 +19,8 @@ export default function AppLayout({
   }, [loading, user, router]);
 
   if (loading || !user) {
-    return (
-      <div style={{ padding: '80px 40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-        <div className="loading-spinner" style={{ margin: '0 auto 16px' }} />
-        Verificando sessão...
-      </div>
-    );
+    return <LoadingPanel message="Verificando sessão..." />;
   }
 
-  return (
-    <div className="app-layout">
-      <Sidebar />
-      <main className="main-content">
-        {children}
-      </main>
-    </div>
-  );
+  return <AppShell>{children}</AppShell>;
 }

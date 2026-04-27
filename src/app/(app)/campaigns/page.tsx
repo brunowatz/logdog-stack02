@@ -1,20 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Plus,
   Edit,
   Megaphone,
-  X,
   Save,
-  Tag,
-  Repeat,
-  Rocket,
 } from 'lucide-react';
 import { getCampaigns, createCampaign, updateCampaign } from '@/lib/data-service';
 import { getCampaignTypeLabel, getCampaignTypeEmoji } from '@/lib/utils';
 import { Campaign, CampaignType } from '@/types';
 import Toast from '@/components/Toast';
+import Modal from '@/components/Modal';
+import LoadingPanel from '@/components/LoadingPanel';
 
 const campaignGradients: Record<CampaignType, string> = {
   promotion: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)',

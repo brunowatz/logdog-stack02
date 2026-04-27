@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Send,
   ChevronRight,
@@ -21,6 +23,7 @@ import {
 import { daysSinceDate, getStatusLabel, formatDate } from '@/lib/utils';
 import StatusBadge from '@/components/StatusBadge';
 import Toast from '@/components/Toast';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { Campaign, Client } from '@/types';
 
 type Step = 1 | 2 | 3 | 4;
@@ -30,12 +33,16 @@ export default function SendPage() {
   const [allClients, setAllClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [sentCount, setSentCount] = useState(0);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const cancelSendRef = useRef(false);
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -88,14 +95,15 @@ export default function SendPage() {
     setSelectedClients(new Set());
   }
 
-  async function handleSend() {
+  async function performSend() {
     if (!selectedCampaign || selectedClients.size === 0) return;
-
+    cancelSendRef.current = false;
     setIsSending(true);
     const clientIds = Array.from(selectedClients);
     let count = 0;
 
     for (const clientId of clientIds) {
+      if (cancelSendRef.current) break;
       const client = allClients.find(c => c.id === clientId);
       if (client && selectedCampaign) {
         try {
@@ -107,13 +115,24 @@ export default function SendPage() {
       }
       count++;
       setSentCount(count);
-      // Pequeno delay para efeito visual e não sobrecarregar
       await new Promise(resolve => setTimeout(resolve, 200));
     }
 
     setIsSending(false);
     setStep(4);
   }
+
+  function cancelSending() {
+    cancelSendRef.current = true;
+  }
+
+  // Indeterminate state no checkbox de cabeçalho.
+  useEffect(() => {
+    if (!headerCheckboxRef.current) return;
+    const total = suggestedClients.length;
+    const sel = suggestedClients.filter(c => selectedClients.has(c.id)).length;
+    headerCheckboxRef.current.indeterminate = sel > 0 && sel < total;
+  }, [selectedClients, suggestedClients]);
 
   const getPreviewMessage = (client: Client) => {
     if (!selectedCampaign) return '';
@@ -321,8 +340,10 @@ export default function SendPage() {
                 <tr>
                   <th style={{ width: '40px' }}>
                     <input
+                      ref={headerCheckboxRef}
                       type="checkbox"
-                      checked={selectedClients.size === suggestedClients.length}
+                      aria-label="Selecionar todos"
+                      checked={suggestedClients.length > 0 && selectedClients.size === suggestedClients.length}
                       onChange={() => selectedClients.size === suggestedClients.length ? deselectAll() : selectAll()}
                       style={{ accentColor: 'var(--brand-primary)' }}
                     />
@@ -473,10 +494,21 @@ export default function SendPage() {
             <button className="btn btn-secondary" onClick={() => setStep(2)}>
               <ChevronLeft size={16} /> Voltar
             </button>
-            <button className="btn btn-success btn-lg" onClick={handleSend} disabled={isSending}>
-              <Send size={18} />
-              {isSending ? `Enviando... (${sentCount}/${selectedClients.size})` : `Enviar para ${selectedClients.size} clientes`}
-            </button>
+            {isSending ? (
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                  Enviando {sentCount}/{selectedClients.size}...
+                </span>
+                <button className="btn btn-secondary btn-sm" onClick={cancelSending}>
+                  Cancelar envio
+                </button>
+              </div>
+            ) : (
+              <button className="btn btn-success btn-lg" onClick={() => setConfirmOpen(true)}>
+                <Send size={18} />
+                Enviar para {selectedClients.size} clientes
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -503,22 +535,42 @@ export default function SendPage() {
             {sentCount} mensagens foram enviadas com sucesso
           </p>
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               className="btn btn-secondary"
               onClick={() => { setStep(1); setSelectedCampaign(null); setSelectedClients(new Set()); setSentCount(0); }}
             >
               Enviar outra campanha
             </button>
+            <Link className="btn btn-secondary" href="/messages">
+              Ver mensagens enviadas
+            </Link>
             <button
               className="btn btn-primary"
-              onClick={() => window.location.href = '/dashboard'}
+              onClick={() => router.push('/dashboard')}
             >
               Voltar ao Dashboard
             </button>
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Confirmar envio em massa"
+        message={
+          <>
+            Você está prestes a enviar <strong>{selectedClients.size} mensagens</strong>
+            {selectedCampaign ? <> pela campanha <strong>“{selectedCampaign.title}”</strong></> : null}.
+            <br /><br />
+            Essa ação não pode ser desfeita. Verifique o preview antes de continuar.
+          </>
+        }
+        confirmLabel={`Enviar ${selectedClients.size} mensagens`}
+        cancelLabel="Voltar"
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => { setConfirmOpen(false); performSend(); }}
+      />
 
       {/* Toast */}
       {toast && (

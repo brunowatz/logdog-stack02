@@ -8,6 +8,7 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 };
 
@@ -41,6 +42,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async signIn(email, password) {
       if (!isSupabaseConfigured || !supabase) return { error: null };
       const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error: error?.message ?? null };
+    },
+    async signInWithMagicLink(email) {
+      if (!isSupabaseConfigured || !supabase) return { error: null };
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
+        },
+      });
       return { error: error?.message ?? null };
     },
     async signOut() {
