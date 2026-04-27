@@ -22,18 +22,45 @@ import StatusBadge from '@/components/StatusBadge';
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
-      const data = await getDashboardStats();
-      setStats(data);
-      setLoading(false);
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch (err) {
+        console.error('Erro ao carregar dados do dashboard:', err);
+        setError('Não foi possível carregar os dados do painel. Verifique sua conexão ou configuração.');
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, []);
 
   if (loading) {
-    return <div className="animate-in" style={{ padding: '40px', textAlign: 'center' }}>Carregando dados do painel...</div>;
+    return (
+      <div className="animate-in" style={{ padding: '80px 40px', textAlign: 'center' }}>
+        <div className="loading-spinner" style={{ margin: '0 auto 16px' }}></div>
+        <p style={{ color: 'var(--text-secondary)' }}>Carregando dados do painel...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="animate-in" style={{ padding: '80px 40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+        <h2 style={{ marginBottom: '8px' }}>Erro ao carregar</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>{error}</p>
+        <button className="btn btn-primary" onClick={() => window.location.reload()}>
+          Tentar Novamente
+        </button>
+      </div>
+    );
   }
 
   return (

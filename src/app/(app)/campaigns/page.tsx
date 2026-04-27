@@ -33,15 +33,23 @@ import { useEffect } from 'react';
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const loadData = async () => {
-    setLoading(true);
-    const data = await getCampaigns();
-    setCampaigns(data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getCampaigns();
+      setCampaigns(data);
+    } catch (err) {
+      console.error('Erro ao carregar campanhas:', err);
+      setError('Não foi possível carregar as campanhas.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -125,7 +133,25 @@ export default function CampaignsPage() {
   }
 
   if (loading) {
-    return <div className="animate-in" style={{ padding: '40px', textAlign: 'center' }}>Carregando campanhas...</div>;
+    return (
+      <div className="animate-in" style={{ padding: '80px 40px', textAlign: 'center' }}>
+        <div className="loading-spinner" style={{ margin: '0 auto 16px' }}></div>
+        <p style={{ color: 'var(--text-secondary)' }}>Carregando campanhas...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="animate-in" style={{ padding: '80px 40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+        <h2 style={{ marginBottom: '8px' }}>Erro ao carregar</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>{error}</p>
+        <button className="btn btn-primary" onClick={loadData}>
+          Tentar Novamente
+        </button>
+      </div>
+    );
   }
 
   return (

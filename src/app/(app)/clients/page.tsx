@@ -11,6 +11,7 @@ import { ClientStatus } from '@/types';
 export default function ClientsPage() {
   const [allClients, setAllClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'last_purchase' | 'total_spent'>('last_purchase');
@@ -18,15 +19,23 @@ export default function ClientsPage() {
 
   useEffect(() => {
     async function loadData() {
-      const data = await getClients();
-      setAllClients(data);
-      setLoading(false);
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getClients();
+        setAllClients(data);
+      } catch (err) {
+        console.error('Erro ao carregar clientes:', err);
+        setError('Não foi possível carregar a lista de clientes.');
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
   }, []);
 
   const filteredClients = useMemo(() => {
-    if (loading) return [];
+    if (loading || error) return [];
     let result = [...allClients];
 
     // Filtro de busca
@@ -77,7 +86,25 @@ export default function ClientsPage() {
   }), [allClients]);
 
   if (loading) {
-    return <div className="animate-in" style={{ padding: '40px', textAlign: 'center' }}>Carregando lista de clientes...</div>;
+    return (
+      <div className="animate-in" style={{ padding: '80px 40px', textAlign: 'center' }}>
+        <div className="loading-spinner" style={{ margin: '0 auto 16px' }}></div>
+        <p style={{ color: 'var(--text-secondary)' }}>Carregando lista de clientes...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="animate-in" style={{ padding: '80px 40px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+        <h2 style={{ marginBottom: '8px' }}>Erro ao carregar</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>{error}</p>
+        <button className="btn btn-primary" onClick={() => window.location.reload()}>
+          Tentar Novamente
+        </button>
+      </div>
+    );
   }
 
   return (

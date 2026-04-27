@@ -7,7 +7,8 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 export const isSupabaseConfigured = !!(
   supabaseUrl && 
   supabaseAnonKey && 
-  supabaseUrl.startsWith('http')
+  supabaseUrl.startsWith('http') &&
+  supabaseUrl.includes('.')
 );
 
 export const supabase = isSupabaseConfigured 

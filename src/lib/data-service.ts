@@ -6,15 +6,12 @@
 import { Client, Product, Order, Campaign, Message, DashboardStats, Suggestion } from '@/types';
 import { mockClients, mockProducts, mockOrders, mockCampaigns, mockMessages } from './mock-data';
 import { getClientStatus, daysSinceDate } from './utils';
-import { supabase } from './supabase';
-
-// Helper para verificar se o Supabase está configurado
-const isSupabaseConfigured = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { supabase, isSupabaseConfigured } from './supabase';
 
 // --- CLIENTES ---
 
 export async function getClients(): Promise<Client[]> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase
       .from('client_status_view')
       .select('*')
@@ -39,7 +36,7 @@ export async function getClients(): Promise<Client[]> {
 }
 
 export async function getClientById(id: string): Promise<Client | undefined> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase
       .from('client_status_view')
       .select('*')
@@ -58,7 +55,7 @@ export async function getClientById(id: string): Promise<Client | undefined> {
 // --- PRODUTOS ---
 
 export async function getProducts(): Promise<Product[]> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && supabase) {
     const { data } = await supabase.from('products').select('*').eq('is_active', true);
     return data || [];
   }
@@ -66,7 +63,7 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && supabase) {
     const { data } = await supabase.from('products').select('*').eq('id', id).single();
     return data || undefined;
   }
@@ -76,7 +73,7 @@ export async function getProductById(id: string): Promise<Product | undefined> {
 // --- PEDIDOS ---
 
 export async function getOrdersByClientId(clientId: string): Promise<Order[]> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && supabase) {
     const { data } = await supabase
       .from('orders')
       .select(`
@@ -93,7 +90,7 @@ export async function getOrdersByClientId(clientId: string): Promise<Order[]> {
 // --- CAMPANHAS ---
 
 export async function getCampaigns(): Promise<Campaign[]> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && supabase) {
     const { data } = await supabase.from('campaigns').select('*').eq('is_active', true);
     return data || [];
   }
@@ -101,7 +98,7 @@ export async function getCampaigns(): Promise<Campaign[]> {
 }
 
 export async function createCampaign(campaign: Omit<Campaign, 'id' | 'created_at'>): Promise<Campaign> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.from('campaigns').insert(campaign).select().single();
     if (error) throw error;
     return data;
@@ -117,7 +114,7 @@ export async function createCampaign(campaign: Omit<Campaign, 'id' | 'created_at
 }
 
 export async function updateCampaign(id: string, updates: Partial<Campaign>): Promise<Campaign | undefined> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.from('campaigns').update(updates).eq('id', id).select().single();
     if (error) return undefined;
     return data;
@@ -132,7 +129,7 @@ export async function updateCampaign(id: string, updates: Partial<Campaign>): Pr
 export async function sendMessage(clientId: string, content: string, campaignId?: string): Promise<Message> {
   const client = await getClientById(clientId);
   
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.from('messages').insert({
       client_id: clientId,
       client_name: client?.name || 'Desconhecido',
